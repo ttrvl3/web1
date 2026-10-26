@@ -13,7 +13,6 @@ KBO.registerTeam({
     { name: "노시환",   number: 8,    pos: "내야수",   videoId: "MfFbAuEGO1M" },
     { name: "강백호",   number: null, pos: "지명타자", videoId: "VF4cnPe0bCM" },
     { name: "채은성",   number: 22,   pos: "내야수",   videoId: "eGlKn4ectFQ" },
-    { name: "하주석",   number: 16,   pos: "내야수",   videoId: "MATjN69HVX0" },
     { name: "최재훈",   number: 13,   pos: "포수",     videoId: "h6u62u2ER1E" },
     { name: "심우준",   number: null, pos: "내야수",   videoId: "8uCLDbsDR8E" },
     { name: "김태연",   number: null, pos: "내야수",   videoId: "eBMSRQin36s" },
