@@ -54,6 +54,37 @@
       background: var(--card);
       color: var(--text);
     }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .toggle input { position: absolute; opacity: 0; }
+    .switch {
+      flex: none;
+      position: relative;
+      width: 44px; height: 26px;
+      border-radius: 13px;
+      background: var(--line);
+      transition: background .15s;
+    }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,.3);
+      transition: transform .15s;
+    }
+    .toggle input:checked + .switch { background: var(--team); }
+    .toggle input:checked + .switch::after { transform: translateX(18px); }
+    .toggle input:focus-visible + .switch { outline: 2px solid var(--team); outline-offset: 2px; }
+    .toggle small { display: block; color: var(--muted); font-size: 12px; }
     h2 { font-size: 16px; margin: 24px 0 10px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
     .card {
@@ -140,6 +171,11 @@
 
   <main>
     <input class="search" id="search" type="search" placeholder="선수 이름 검색">
+    <label class="toggle">
+      <input type="checkbox" id="appMode">
+      <span class="switch" aria-hidden="true"></span>
+      <span>YouTube 앱으로 재생<small>프리미엄이면 광고 없이, 화면을 꺼도 들을 수 있어요</small></span>
+    </label>
     <h2>선수 응원가</h2>
     <div class="grid" id="players"></div>
     <h2>팀 응원가</h2>
@@ -286,7 +322,7 @@
 
     function play(song, card) {
       document.querySelectorAll(".card.playing").forEach((c) => c.classList.remove("playing"));
-      if (!song.videoId) {
+      if (!song.videoId || appMode()) {
         window.open(youtubeUrl(song), "_blank", "noopener");
         return;
       }
@@ -333,6 +369,16 @@
       document.querySelectorAll(".card.playing").forEach((c) => c.classList.remove("playing"));
     };
     $("search").oninput = renderLists;
+
+    // 앱 재생 모드: 휴대폰에서는 youtube.com 링크가 YouTube 앱으로 열린다.
+    // 설정은 이 브라우저에만 기억한다(저장이 막힌 환경에서는 매번 꺼진 상태로 시작).
+    const APP_MODE_KEY = "kbo-app-mode";
+    const appMode = () => $("appMode").checked;
+    try { $("appMode").checked = localStorage.getItem(APP_MODE_KEY) === "1"; } catch (e) {}
+    $("appMode").onchange = () => {
+      try { localStorage.setItem(APP_MODE_KEY, appMode() ? "1" : "0"); } catch (e) {}
+      if (appMode()) $("closeBtn").click();
+    };
 
     // 주소 끝의 #hanwha 처럼 팀을 지정해 바로 열 수 있다.
     const initial = location.hash.slice(1);
