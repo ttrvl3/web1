@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBO 응원가</title>
+  <style>
+    :root {
+      --team: #C30452;
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: #e3e3e8;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #111113; --card: #1c1c1f; --text: #f2f2f4; --muted: #9a9aa2; --line: #2c2c31; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 260px;
+    }
+    header {
+      background: var(--team);
+      color: #fff;
+      padding: 20px 16px 0;
+    }
+    header h1 { margin: 0 0 4px; font-size: 22px; }
+    header p { margin: 0 0 14px; font-size: 13px; opacity: .85; }
+    .tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    .tabs button {
+      flex: none;
+      border: 0;
+      background: rgba(255,255,255,.15);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px 10px 0 0;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .tabs button[aria-selected="true"] { background: var(--bg); color: var(--text); font-weight: 700; }
+    .tabs button:disabled { opacity: .5; cursor: default; }
+    main { max-width: 900px; margin: 0 auto; padding: 16px; }
+    .search {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--text);
+    }
+    h2 { font-size: 16px; margin: 24px 0 10px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+    }
+    .card:hover { border-color: var(--team); }
+    .card.playing { border-color: var(--team); box-shadow: 0 0 0 2px var(--team) inset; }
+    .num {
+      flex: none;
+      width: 40px; height: 40px;
+      display: grid; place-items: center;
+      border-radius: 50%;
+      background: var(--team);
+      color: #fff;
+      font-weight: 700;
+    }
+    .info { min-width: 0; }
+    .name { font-weight: 700; }
+    .meta { font-size: 12px; color: var(--muted); }
+    .empty { color: var(--muted); font-size: 14px; }
+    .player {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: var(--card);
+      border-top: 1px solid var(--line);
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+      display: none;
+    }
+    .player.open { display: block; }
+    .player-inner { max-width: 900px; margin: 0 auto; display: flex; gap: 12px; align-items: center; }
+    .frame { flex: none; width: 320px; max-width: 45%; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; overflow: hidden; }
+    .frame > * { width: 100%; height: 100%; }
+    .now { flex: 1; min-width: 0; }
+    .now .name { font-size: 17px; }
+    .now a { color: var(--team); font-size: 13px; }
+    .now button {
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .notice { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    footer { font-size: 12px; color: var(--muted); margin-top: 32px; line-height: 1.6; }
+    @media (max-width: 560px) {
+      .frame { width: 170px; }
+      .now .name { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>KBO 선수 응원가</h1>
+    <p>선수를 누르면 응원가가 재생됩니다.</p>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+  </header>
+
+  <main>
+    <input class="search" id="search" type="search" placeholder="선수 이름 검색">
+    <h2>선수 응원가</h2>
+    <div class="grid" id="players"></div>
+    <h2>팀 응원가</h2>
+    <div class="grid" id="teamSongs"></div>
+    <footer>
+      영상은 YouTube에 올라온 영상을 임베드한 것이며 저작권은 각 업로더와 원저작자에게 있습니다.<br>
+      <span id="updated"></span>
+    </footer>
+  </main>
+
+  <section class="player" id="player" aria-live="polite">
+    <div class="player-inner">
+      <div class="frame"><div id="yt"></div></div>
+      <div class="now">
+        <div class="name" id="nowName"></div>
+        <div class="meta" id="nowMeta"></div>
+        <a id="nowLink" target="_blank" rel="noopener">YouTube에서 열기</a>
+        <div class="notice" id="nowNotice"></div>
+        <button type="button" id="closeBtn">닫기</button>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // 팀 데이터 파일(data/*.js)이 KBO.registerTeam()으로 자신을 등록한다.
+    window.KBO = { teams: {}, registerTeam(t) { this.teams[t.id] = t; } };
+  </script>
+  <script src="data/lg.js"></script>
+  <script>
+    // 10개 구단. 데이터 파일이 아직 없는 팀은 탭이 비활성화된다.
+    const TEAM_ORDER = [
+      ["lg", "LG"], ["kia", "KIA"], ["samsung", "삼성"], ["doosan", "두산"], ["kt", "KT"],
+      ["ssg", "SSG"], ["lotte", "롯데"], ["hanwha", "한화"], ["nc", "NC"], ["kiwoom", "키움"]
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    let team = null;
+    let ytPlayer = null;
+    let ytReady = false;
+    let pending = null;
+    let current = null;
+
+    function fmtTime(sec) {
+      return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+    }
+
+    function sourceLabel(song) {
+      if (!song.videoId) return "영상 미확인 · YouTube 검색";
+      if (song.start) return "모음 영상 " + fmtTime(song.start) + "부터";
+      return "";
+    }
+
+    function youtubeUrl(song) {
+      if (!song.videoId) {
+        const q = team.name + " " + song.name + " 응원가";
+        return "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
+      }
+      return "https://www.youtube.com/watch?v=" + song.videoId + (song.start ? "&t=" + song.start + "s" : "");
+    }
+
+    function renderTabs() {
+      const nav = $("tabs");
+      nav.innerHTML = "";
+      for (const [id, label] of TEAM_ORDER) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("role", "tab");
+        b.textContent = label;
+        b.disabled = !KBO.teams[id];
+        if (b.disabled) b.title = "준비 중";
+        b.setAttribute("aria-selected", String(team && team.id === id));
+        b.onclick = () => selectTeam(id);
+        nav.appendChild(b);
+      }
+    }
+
+    function makeCard(song, badge) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "card";
+      const meta = [song.pos, sourceLabel(song)].filter(Boolean).join(" · ");
+      b.innerHTML = '<span class="num"></span><span class="info"><div class="name"></div><div class="meta"></div></span>';
+      b.querySelector(".num").textContent = badge;
+      b.querySelector(".name").textContent = song.name;
+      b.querySelector(".meta").textContent = meta;
+      b.onclick = () => play(song, b);
+      return b;
+    }
+
+    function renderLists() {
+      const q = $("search").value.trim();
+      const players = team.players.filter((p) => !q || p.name.includes(q));
+      const list = $("players");
+      list.innerHTML = "";
+      if (!players.length) list.innerHTML = '<p class="empty">검색 결과가 없습니다.</p>';
+      for (const p of players) list.appendChild(makeCard(p, p.number ?? "–"));
+
+      const songs = $("teamSongs");
+      songs.innerHTML = "";
+      for (const s of team.teamSongs) songs.appendChild(makeCard(s, "♪"));
+    }
+
+    function selectTeam(id) {
+      team = KBO.teams[id];
+      document.documentElement.style.setProperty("--team", team.color);
+      $("updated").textContent = team.name + " 데이터 기준일: " + team.updated;
+      renderTabs();
+      renderLists();
+    }
+
+    function play(song, card) {
+      document.querySelectorAll(".card.playing").forEach((c) => c.classList.remove("playing"));
+      if (!song.videoId) {
+        window.open(youtubeUrl(song), "_blank", "noopener");
+        return;
+      }
+      card.classList.add("playing");
+      current = song;
+      $("player").classList.add("open");
+      $("nowName").textContent = song.name;
+      $("nowMeta").textContent = [team.name, sourceLabel(song)].filter(Boolean).join(" · ");
+      $("nowLink").href = youtubeUrl(song);
+      $("nowNotice").textContent = "";
+      if (ytReady) {
+        ytPlayer.loadVideoById({ videoId: song.videoId, startSeconds: song.start || 0 });
+      } else {
+        pending = song;
+      }
+    }
+
+    // YouTube IFrame Player API
+    window.onYouTubeIframeAPIReady = function () {
+      ytPlayer = new YT.Player("yt", {
+        playerVars: { playsinline: 1, rel: 0 },
+        events: {
+          onReady() {
+            ytReady = true;
+            if (pending) {
+              ytPlayer.loadVideoById({ videoId: pending.videoId, startSeconds: pending.start || 0 });
+              pending = null;
+            }
+          },
+          onError() {
+            // 삭제·비공개·임베드 금지 영상
+            $("nowNotice").textContent = "이 영상은 여기서 재생할 수 없습니다. 'YouTube에서 열기'를 눌러주세요.";
+          }
+        }
+      });
+    };
+    const api = document.createElement("script");
+    api.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(api);
+
+    $("closeBtn").onclick = () => {
+      if (ytReady) ytPlayer.stopVideo();
+      $("player").classList.remove("open");
+      document.querySelectorAll(".card.playing").forEach((c) => c.classList.remove("playing"));
+    };
+    $("search").oninput = renderLists;
+
+    selectTeam("lg");
+  </script>
+</body>
+</html>
