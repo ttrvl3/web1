@@ -72,6 +72,19 @@
     }
     .card:hover { border-color: var(--team); }
     .card.playing { border-color: var(--team); box-shadow: 0 0 0 2px var(--team) inset; }
+    .card-wrap { position: relative; }
+    .card-wrap .card { padding-right: 40px; }
+    .profile {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 28px; height: 28px;
+      display: grid; place-items: center;
+      border-radius: 50%;
+      color: var(--muted);
+      font-size: 15px;
+      text-decoration: none;
+    }
+    .profile:hover { color: var(--team); background: var(--bg); }
     .num {
       flex: none;
       width: 40px; height: 40px;
@@ -81,6 +94,7 @@
       color: #fff;
       font-weight: 700;
     }
+    .num.initial { background: transparent; color: var(--team); border: 2px solid var(--team); }
     .info { min-width: 0; }
     .name { font-weight: 700; }
     .meta { font-size: 12px; color: var(--muted); }
@@ -154,7 +168,15 @@
     window.KBO = { teams: {}, registerTeam(t) { this.teams[t.id] = t; } };
   </script>
   <script src="data/lg.js"></script>
+  <script src="data/kia.js"></script>
+  <script src="data/samsung.js"></script>
+  <script src="data/doosan.js"></script>
+  <script src="data/kt.js"></script>
+  <script src="data/ssg.js"></script>
+  <script src="data/lotte.js"></script>
   <script src="data/hanwha.js"></script>
+  <script src="data/nc.js"></script>
+  <script src="data/kiwoom.js"></script>
   <script>
     // 10개 구단. 데이터 파일이 아직 없는 팀은 탭이 비활성화된다.
     const TEAM_ORDER = [
@@ -174,8 +196,8 @@
     }
 
     function sourceLabel(song) {
-      if (!song.videoId) return "영상 미확인 · YouTube 검색";
-      if (song.start) return "모음 영상 " + fmtTime(song.start) + "부터";
+      if (!song.videoId) return "YouTube 검색";
+      if (song.start) return "모음 " + fmtTime(song.start) + "~";
       return "";
     }
 
@@ -204,6 +226,29 @@
       nav.querySelector('[aria-selected="true"]')?.scrollIntoView({ inline: "center", block: "nearest" });
     }
 
+    // 선수 프로필(사진·기록)은 직접 싣지 않고 네이버 검색의 선수 정보 카드로 연결한다.
+    function profileUrl(player) {
+      return "https://search.naver.com/search.naver?query=" + encodeURIComponent(team.name + " " + player.name);
+    }
+
+    function makePlayerCard(p) {
+      const badge = p.number ?? p.name[0];
+      const wrap = document.createElement("div");
+      wrap.className = "card-wrap";
+      const card = makeCard(p, badge);
+      if (p.number == null) card.querySelector(".num").classList.add("initial");
+      const a = document.createElement("a");
+      a.className = "profile";
+      a.href = profileUrl(p);
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.title = p.name + " 선수 정보";
+      a.setAttribute("aria-label", p.name + " 선수 정보");
+      a.textContent = "ⓘ";
+      wrap.append(card, a);
+      return wrap;
+    }
+
     function makeCard(song, badge) {
       const b = document.createElement("button");
       b.type = "button";
@@ -223,7 +268,7 @@
       const list = $("players");
       list.innerHTML = "";
       if (!players.length) list.innerHTML = '<p class="empty">검색 결과가 없습니다.</p>';
-      for (const p of players) list.appendChild(makeCard(p, p.number ?? "–"));
+      for (const p of players) list.appendChild(makePlayerCard(p));
 
       const songs = $("teamSongs");
       songs.innerHTML = "";

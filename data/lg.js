@@ -4,7 +4,7 @@
 //   videoId만 있음        → 해당 선수 단독 응원가 영상
 //   videoId + start(초)   → 여러 선수 모음 영상의 해당 구간부터 재생
 //   videoId 없음          → 아직 확인된 영상이 없어 YouTube 검색으로 연결
-// number가 null이면 등번호 미확인.
+// number가 null이면 등번호 미확인(화면에는 이름 첫 글자로 표시).
 KBO.registerTeam({
   id: "lg",
   name: "LG 트윈스",
