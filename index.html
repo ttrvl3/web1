@@ -154,6 +154,7 @@
     window.KBO = { teams: {}, registerTeam(t) { this.teams[t.id] = t; } };
   </script>
   <script src="data/lg.js"></script>
+  <script src="data/hanwha.js"></script>
   <script>
     // 10개 구단. 데이터 파일이 아직 없는 팀은 탭이 비활성화된다.
     const TEAM_ORDER = [
@@ -200,6 +201,7 @@
         b.onclick = () => selectTeam(id);
         nav.appendChild(b);
       }
+      nav.querySelector('[aria-selected="true"]')?.scrollIntoView({ inline: "center", block: "nearest" });
     }
 
     function makeCard(song, badge) {
@@ -230,6 +232,7 @@
 
     function selectTeam(id) {
       team = KBO.teams[id];
+      history.replaceState(null, "", "#" + id);
       document.documentElement.style.setProperty("--team", team.color);
       $("updated").textContent = team.name + " 데이터 기준일: " + team.updated;
       renderTabs();
@@ -286,7 +289,9 @@
     };
     $("search").oninput = renderLists;
 
-    selectTeam("lg");
+    // 주소 끝의 #hanwha 처럼 팀을 지정해 바로 열 수 있다.
+    const initial = location.hash.slice(1);
+    selectTeam(KBO.teams[initial] ? initial : "lg");
   </script>
 </body>
 </html>
